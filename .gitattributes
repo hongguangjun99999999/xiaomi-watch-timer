@@ -1,0 +1,7 @@
+# 统一换行符，避免 Windows 上提交时反复提示 LF -> CRLF
+* text=auto eol=lf
+
+# 二进制文件不参与换行转换
+*.png binary
+*.rpk binary
+*.jpg binary

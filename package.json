@@ -1,0 +1,14 @@
+{
+  "name": "random-cue",
+  "version": "1.1.2",
+  "private": true,
+  "description": "Redmi Watch 6 随机间隔专注提醒（震动版）",
+  "scripts": {
+    "start": "aiot start",
+    "build": "aiot build",
+    "release": "aiot release"
+  },
+  "devDependencies": {
+    "aiot-toolkit": "^2.0.5"
+  }
+}

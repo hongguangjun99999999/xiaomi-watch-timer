@@ -1,0 +1,27 @@
+<script>
+/**
+ * 应用入口。
+ * 注意：app.ux 的代码必须写在 <script> 内，否则不会执行。
+ * 注意：编译后 manifest 会被注入本文件，别删 /**manifest** / 这类标识（如果模板里有）。
+ *
+ * 这里刻意保持为空壳：所有计时逻辑都在微服务 services/focus-timer.js 里，
+ * 应用被杀掉、页面关闭都不影响它。app.ux 里放计时器反而会被应用生命周期拖死。
+ */
+export default {
+  onCreate() {
+    console.info('random-cue onCreate')
+  },
+  onShow() {
+    console.info('random-cue onShow')
+  },
+  onHide() {
+    console.info('random-cue onHide')
+  },
+  onDestroy() {
+    console.info('random-cue onDestroy')
+  },
+  onError(e) {
+    console.error('random-cue onError', e)
+  }
+}
+</script>

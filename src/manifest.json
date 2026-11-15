@@ -1,0 +1,60 @@
+{
+  "package": "com.tang.randomcue",
+  "name": "随机提醒",
+  "icon": "/common/icon.png",
+  "versionName": "1.1.2",
+  "versionCode": 13,
+  "minAPILevel": 1,
+  "deviceTypeList": [
+    "watch"
+  ],
+  "features": [
+    {
+      "name": "system.vibrator"
+    },
+    {
+      "name": "system.storage"
+    },
+    {
+      "name": "system.brightness"
+    },
+    {
+      "name": "system.router"
+    },
+    {
+      "name": "system.serviceclient"
+    },
+    {
+      "name": "system.device"
+    }
+  ],
+  "permissions": [],
+  "services": [
+    {
+      "name": "focusTimer",
+      "path": "services/focusTimer",
+      "autoStart": true,
+      "permissions": []
+    }
+  ],
+  "config": {
+    "designWidth": 432,
+    "logLevel": "log"
+  },
+  "display": {
+    "backgroundColor": "#000000"
+  },
+  "router": {
+    "entry": "pages/Home",
+    "pages": {
+      "pages/Home": {
+        "component": "index",
+        "path": "/"
+      },
+      "pages/Settings": {
+        "component": "index",
+        "path": "/Settings"
+      }
+    }
+  }
+}

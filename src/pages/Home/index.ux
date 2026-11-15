@@ -1,0 +1,523 @@
+<template>
+  <div class="page">
+    <!-- 顶部：模式 + 设置入口 -->
+    <div class="topbar">
+      <div class="tag {{tagClass}}">
+        <text class="tag-text">{{phaseLabel}}</text>
+      </div>
+      <div class="btn-set" @click="openSettings">
+        <text class="btn-set-text">设置</text>
+      </div>
+    </div>
+
+    <!-- 环形进度 + 圈内读数 -->
+    <stack class="ring">
+      <progress class="ring-arc {{ringClass}}" type="arc" percent="{{percent}}"></progress>
+      <div class="ring-center">
+        <text class="clock">{{clock}}</text>
+        <text class="clock-sub">{{subLabel}}</text>
+      </div>
+    </stack>
+
+    <!-- 下一跳信息 -->
+    <div class="info">
+      <text class="info-main">{{nextText}}</text>
+      <text if="{{tip}}" class="info-warn">{{tip}}</text>
+      <text else class="info-sub">{{roundsText}}</text>
+    </div>
+
+    <!-- 操作区 -->
+    <div class="actions">
+      <div if="{{phase === 'idle'}}" class="btn btn-go" @click="onPrimary">
+        <text class="btn-text">{{startLabel}}</text>
+      </div>
+      <div else class="action-row">
+        <div class="btn btn-ghost" @click="onPrimary">
+          <text class="btn-text">{{running ? '暂停' : '继续'}}</text>
+        </div>
+        <div class="btn btn-stop" @click="onStop">
+          <text class="btn-text">结束</text>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</template>
+
+<style>
+.page {
+  width: 432px;
+  height: 514px;
+  /* 竖向排布 + 余量等分：四个块高度固定，多出来的高度平均分给三道间隙。
+     这样无论可用高度是 514 还是被系统占掉一截，环都不会被压成椭圆。 */
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 4px;
+  padding-bottom: 14px;
+  background-color: #000000;
+}
+
+/* 四块高度固定 + flex-shrink: 0。
+   Vela 的 flex-shrink 默认是 1：一旦内容高度超过可用高度（系统占掉安全区时就会），
+   环会被压成椭圆、按钮被挤扁 —— 这就是"整屏不对劲"的来源。
+   合计 56 + 244 + 68 + 96 = 464，容器 514 - 18(padding) = 496，余 32 由间隙均分。 */
+
+/* ---------- 顶部 ---------- */
+.topbar {
+  flex-shrink: 0;
+  width: 432px;
+  height: 56px;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding-left: 24px;
+  padding-right: 24px;
+}
+.tag {
+  flex-shrink: 0;
+  padding-left: 20px;
+  padding-right: 20px;
+  height: 40px;
+  border-radius: 20px;
+  background-color: #1c1c1e;
+  justify-content: center;
+  align-items: center;
+}
+/* 必须放在 .tag 之后，同优先级时后定义者覆盖底色 */
+.tag-focus { background-color: #0a2a4d; }
+.tag-micro { background-color: #0d3321; }
+.tag-rest  { background-color: #3d2a08; }
+.tag-idle  { background-color: #1c1c1e; }
+.tag-text {
+  font-size: 24px;
+  color: #ffffff;
+}
+.btn-set {
+  height: 52px;
+  padding-left: 16px;
+  padding-right: 16px;
+  justify-content: center;
+  align-items: center;
+}
+.btn-set-text {
+  font-size: 26px;
+  color: #8e8e93;
+}
+
+
+/* ---------- 环 ---------- */
+.ring {
+  flex-shrink: 0;
+  width: 244px;
+  height: 244px;
+}
+.ring-arc {
+  width: 244px;
+  height: 244px;
+  stroke-width: 16px;
+  /* 文档：start-angle 以时钟 0 点为基线，0 = 12 点，正数顺时针。
+     写 270deg 会从 9 点钟开始（我一开始就是这么写错的）；
+     total-angle 取正数才是顺时针，负数会逆时针画。 */
+  start-angle: 0deg;
+  total-angle: 360deg;
+  layer-color: #2a2a2e;
+  color: #0d84ff;
+}
+/* progress 的 color 属于样式表，必须靠 class 切换，不能写 color="{{x}}" */
+.arc-focus { color: #0d84ff; }
+.arc-micro { color: #32d74b; }
+.arc-rest  { color: #ff9f0a; }
+.ring-center {
+  width: 244px;
+  height: 244px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+.clock {
+  font-size: 56px;
+  font-weight: bold;
+  color: #ffffff;
+}
+.clock-sub {
+  font-size: 22px;
+  color: #8e8e93;
+  margin-top: 6px;
+}
+
+/* ---------- 信息 ---------- */
+.info {
+  flex-shrink: 0;
+  width: 432px;
+  height: 68px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+.info-main {
+  font-size: 26px;
+  color: #c7c7cc;
+}
+.info-sub {
+  font-size: 21px;
+  color: #6e6e73;
+  margin-top: 4px;
+}
+
+/* ---------- 按钮 ---------- */
+.actions {
+  flex-shrink: 0;
+  width: 432px;
+  height: 96px;
+  justify-content: center;
+  align-items: center;
+}
+.action-row {
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+}
+.btn {
+  flex-shrink: 0;
+  height: 86px;
+  border-radius: 43px;
+  justify-content: center;
+  align-items: center;
+}
+.btn-go {
+  width: 352px;
+  background-color: #0d84ff;
+}
+.btn-ghost {
+  width: 164px;
+  background-color: #2c2c2e;
+  margin-right: 12px;
+}
+.btn-stop {
+  width: 164px;
+  background-color: #2c2c2e;
+}
+.btn-text {
+  font-size: 30px;
+  color: #ffffff;
+  font-weight: bold;
+}
+
+.info-warn {
+  font-size: 19px;
+  color: #ff9f0a;
+  margin-top: 4px;
+}
+</style>
+
+<script>
+import serviceclient from '@system.serviceclient'
+import brightness from '@system.brightness'
+import router from '@system.router'
+import engineFactory from '../../common/engine'
+import { buzz, cancelBuzz, shouldBuzz, EVENT_PATTERN } from '../../common/buzz'
+import DEFAULTS, { loadConfig } from '../../common/config'
+
+const SERVICE_NAME = 'focusTimer'
+
+export default {
+  private: {
+    phase: 'idle',
+    running: false,
+    paused: false,
+    clock: '00:00',
+    phaseLabel: '准备开始',
+    subLabel: '',
+    percent: 0,
+    ringClass: 'arc-focus',
+    tagClass: 'tag-idle',
+    nextText: '',
+    roundsText: '',
+    startLabel: '开始专注',
+    tip: '',
+    cfg: DEFAULTS
+  },
+
+  onInit() {
+    this.cfg = DEFAULTS
+    this.useService = false
+    this.localEngine = null
+    this.localTimer = null
+    this.instance = null
+
+    loadConfig((c) => {
+      this.cfg = c
+      this.refreshIdle()
+    })
+
+    this.connectService()
+  },
+
+  onShow() {
+    // 从设置页回来时配置可能变了，重新读一遍
+    loadConfig((c) => {
+      this.cfg = c
+      this.refreshIdle()
+    })
+    // 让服务把最新状态推过来（页面可能离开过很久）
+    if (this.useService && this.instance) {
+      try { this.instance.postMessage({ cmd: 'hello' }) } catch (e) {}
+    }
+    this.applyKeepScreenOn()
+  },
+
+  onHide() {
+    // 回到前台时重新声明一次常亮（系统可能在切后台时清掉标记）
+    this.lastKeepAt = 0
+  },
+
+  onDestroy() {
+    this.stopLocalTimer()
+    // 中断还没播完的震动节奏，否则页面没了定时器还在跑
+    cancelBuzz()
+    if (this.tipTimer) {
+      clearTimeout(this.tipTimer)
+      this.tipTimer = null
+    }
+    // 故意不 disconnect：policy=always 的服务需要保持后台运行，
+    // 断开连接会让它按需关闭，90 分钟的计时就断了。
+  },
+
+  /* ---------------- 服务连接与降级 ---------------- */
+
+  connectService() {
+    try {
+      this.instance = serviceclient.connect({
+        name: SERVICE_NAME,
+        params: {},
+        policy: 'always'
+      })
+      this.useService = true
+
+      this.instance.onmessage = (p) => this.onServiceMessage(p)
+      this.instance.onerror = (e) => {
+        console.error('service error', JSON.stringify(e))
+        this.fallbackToLocal('后台计时不可用(' + ((e && e.code) || '?') + ')')
+      }
+    } catch (e) {
+      console.error('connect fail', e)
+      this.fallbackToLocal('后台计时不可用')
+    }
+  },
+
+  fallbackToLocal(reason) {
+    if (this.localEngine) return
+    console.warn('fallback to local:', reason)
+    this.useService = false
+    this.instance = null
+    this.localEngine = engineFactory(null)
+    this.tip = '后台计时不可用，改前台计时'
+    this.tipSticky = true
+    this.startLocalTimer()
+  },
+
+  startLocalTimer() {
+    this.stopLocalTimer()
+    this.localTickAt = Date.now()
+    this.localTimer = setInterval(() => {
+      if (!this.localEngine) return
+      const now = Date.now()
+      // 页面在后台被挂起时，这里的间隔会远大于 500ms
+      const sleptMs = now - this.localTickAt
+      this.localTickAt = now
+
+      const r = this.localEngine.tick(now, this.cfg)
+      if (sleptMs > 4000) this.onWake(sleptMs, r.events)
+      else this.handleEvents(r.events)
+      this.applyState(r.state)
+    }, 500)
+  },
+
+  /**
+   * 从挂起中恢复：只补一次最有用的提示，不逐个补震（会连震一串）。
+   * 服务路径下这段逻辑在 focusTimer.js 里，这里是降级到前台计时时的同款处理。
+   */
+  onWake(sleptMs, events) {
+    const evs = events || []
+    let makeUp = ''
+    for (let i = 0; i < evs.length; i++) {
+      if (evs[i].type === 'microStart') makeUp = 'microStart'
+      else if (evs[i].type === 'restEnd' && !makeUp) makeUp = 'restEnd'
+    }
+    if (makeUp && sleptMs <= 600000) buzz(makeUp, this.cfg.buzzLevel)
+    this.showTip('息屏被挂起 ' + this.fmtGap(sleptMs) + '，已重新对齐')
+  },
+
+  fmtGap(ms) {
+    const s = Math.round((ms || 0) / 1000)
+    if (s < 60) return s + ' 秒'
+    const m = Math.round(s / 60)
+    return m + ' 分钟'
+  },
+
+  stopLocalTimer() {
+    if (this.localTimer) {
+      clearInterval(this.localTimer)
+      this.localTimer = null
+    }
+  },
+
+  handleEvents(events) {
+    if (!events) return
+    for (let i = 0; i < events.length; i++) {
+      const ev = events[i]
+      if (shouldBuzz(ev, 4000)) {
+        const p = EVENT_PATTERN[ev.type]
+        if (p) buzz(p, this.cfg.buzzLevel)
+      }
+    }
+  },
+
+  onServiceMessage(p) {
+    if (!p || !p.type) return
+    if (p.type === 'hello') {
+      // 配置以本地 storage 为准：服务里那份可能属于上一轮会话。
+      // 下一次 start 会带着最新配置过去，所以这里不回写 cfg。
+      if (p.state) this.applyState(p.state)
+      // 降级告警是常驻的，别被 hello 冲掉
+      if (!this.tipSticky) this.tip = ''
+      return
+    }
+    if (p.type === 'state') {
+      this.applyState(p.state)
+      return
+    }
+    if (p.type === 'config') {
+      this.cfg = p.config
+      this.refreshIdle()
+      return
+    }
+    if (p.type === 'woke') {
+      // 服务刚从挂起中恢复。告诉用户为什么刚才没收到提示，
+      // 否则他会以为应用坏了。补震已经在服务里发过了。
+      this.showTip('息屏被挂起 ' + this.fmtGap(p.sleptMs) + '，已重新对齐')
+      return
+    }
+  },
+
+  /* ---------------- 命令 ---------------- */
+
+  onPrimary() {
+    if (this.phase === 'idle') {
+      if (this.useService && this.instance) {
+        this.instance.postMessage({ cmd: 'start', config: this.cfg })
+      } else if (this.localEngine) {
+        this.applyState(this.localEngine.start(Date.now(), this.cfg))
+      }
+      this.applyKeepScreenOn()
+      return
+    }
+
+    const cmd = this.running ? 'pause' : 'resume'
+    if (this.useService && this.instance) {
+      this.instance.postMessage({ cmd })
+    } else if (this.localEngine) {
+      const now = Date.now()
+      this.applyState(cmd === 'pause' ? this.localEngine.pause(now) : this.localEngine.resume(now))
+    }
+  },
+
+  onStop() {
+    if (this.useService && this.instance) {
+      this.instance.postMessage({ cmd: 'stop' })
+    } else if (this.localEngine) {
+      this.applyState(this.localEngine.stop(Date.now()).snapshot)
+    }
+    this.applyKeepScreenOn()
+  },
+
+  applyKeepScreenOn() {
+    const on = !!this.cfg.keepScreenOn && !!this.running
+    const now = Date.now()
+    // 值没变就不重复调系统接口；但每 60 秒重申一次——
+    // 系统在切前后台、低电时可能把这个标记清掉，重申一次成本很低。
+    if (this.lastKeepOn === on && now - (this.lastKeepAt || 0) < 60000) return
+    this.lastKeepOn = on
+    this.lastKeepAt = now
+    try {
+      brightness.setKeepScreenOn({ keepScreenOn: on, success() {}, fail() {} })
+    } catch (e) {}
+  },
+
+  /** 临时提示：10 秒后自动消失。降级告警是常驻的，不能被临时提示冲掉。 */
+  showTip(msg) {
+    if (this.tipSticky) return
+    this.tip = msg
+    if (this.tipTimer) clearTimeout(this.tipTimer)
+    this.tipTimer = setTimeout(() => {
+      this.tipTimer = null
+      if (!this.tipSticky) this.tip = ''
+    }, 10000)
+  },
+
+  openSettings() {
+    router.push({ uri: '/Settings' })
+  },
+
+  /* ---------------- 渲染 ---------------- */
+
+  fmt(ms) {
+    const total = Math.max(0, Math.round((ms || 0) / 1000))
+    const m = Math.floor(total / 60)
+    const s = total % 60
+    return (m < 10 ? '0' + m : '' + m) + ':' + (s < 10 ? '0' + s : '' + s)
+  },
+
+  applyState(st) {
+    if (!st) return
+    this.phase = st.phase
+    this.running = st.running
+    this.paused = st.paused
+    this.percent = Math.max(0, Math.min(100, st.percent || 0))
+    this.clock = this.fmt(st.remainMs)
+
+    if (st.phase === 'focus') {
+      this.phaseLabel = '专注中'
+      this.tagClass = 'tag-focus'
+      this.subLabel = '专注剩余'
+      this.ringClass = 'arc-focus'
+      this.nextText = '距下次提示 ' + this.fmt(st.nextMicroInMs)
+      this.roundsText = '已完成 ' + st.rounds + ' 次微休息'
+    } else if (st.phase === 'micro') {
+      this.phaseLabel = '微休息'
+      this.tagClass = 'tag-micro'
+      this.subLabel = '抬头看看远处'
+      this.ringClass = 'arc-micro'
+      this.nextText = '这次休息 ' + (st.microSec || 0) + ' 秒'
+      this.roundsText = '已完成 ' + st.rounds + ' 次微休息'
+    } else if (st.phase === 'rest') {
+      this.phaseLabel = '大休息'
+      this.tagClass = 'tag-rest'
+      this.subLabel = '休息剩余'
+      this.ringClass = 'arc-rest'
+      this.nextText = '站起来走一走'
+      this.roundsText = '本轮共 ' + st.rounds + ' 次微休息'
+    } else {
+      this.refreshIdle()
+    }
+
+    if (this.paused) this.subLabel = '已暂停'
+    this.applyKeepScreenOn()
+  },
+
+  refreshIdle() {
+    if (this.phase !== 'idle') return
+    const c = this.cfg || DEFAULTS
+    this.phaseLabel = '准备开始'
+    this.tagClass = 'tag-idle'
+    this.subLabel = '本轮专注'
+    this.ringClass = 'arc-focus'
+    this.percent = 100
+    this.clock = this.fmt(c.focusMin * 60000)
+    this.nextText = '每 ' + c.gapMin + '-' + c.gapMaxMin + ' 分钟提醒一次'
+    this.roundsText = '微休息 ' + c.microMinSec + '-' + c.microMaxSec + ' 秒'
+    this.startLabel = '开始专注'
+  }
+}
+</script>

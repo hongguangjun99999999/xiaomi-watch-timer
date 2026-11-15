@@ -1,0 +1,396 @@
+<template>
+  <div class="page">
+    <div class="topbar">
+      <div class="btn-back" @click="goBack">
+        <text class="btn-back-t">返回</text>
+      </div>
+      <text class="title">设置</text>
+      <!-- 与左侧「返回」等宽的占位，让标题真正居中 -->
+      <div class="bar-spacer"></div>
+    </div>
+
+    <scroll class="list" scroll-y="true" bounces="true">
+
+      <div class="row">
+        <text class="label">专注时长</text>
+        <div class="body">
+          <div class="sbtn" @click="step('focusMin', -5)">
+            <text class="sbtn-t">-</text>
+          </div>
+          <text class="sval">{{focusMin}}分</text>
+          <div class="sbtn" @click="step('focusMin', 5)">
+            <text class="sbtn-t">+</text>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <text class="label">间隔下限</text>
+        <div class="body">
+          <div class="sbtn" @click="step('gapMin', -1)">
+            <text class="sbtn-t">-</text>
+          </div>
+          <text class="sval">{{gapMin}}分</text>
+          <div class="sbtn" @click="step('gapMin', 1)">
+            <text class="sbtn-t">+</text>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <text class="label">间隔上限</text>
+        <div class="body">
+          <div class="sbtn" @click="step('gapMaxMin', -1)">
+            <text class="sbtn-t">-</text>
+          </div>
+          <text class="sval">{{gapMaxMin}}分</text>
+          <div class="sbtn" @click="step('gapMaxMin', 1)">
+            <text class="sbtn-t">+</text>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <text class="label">微休最短</text>
+        <div class="body">
+          <div class="sbtn" @click="step('microMinSec', -1)">
+            <text class="sbtn-t">-</text>
+          </div>
+          <text class="sval">{{microMinSec}}秒</text>
+          <div class="sbtn" @click="step('microMinSec', 1)">
+            <text class="sbtn-t">+</text>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <text class="label">微休最长</text>
+        <div class="body">
+          <div class="sbtn" @click="step('microMaxSec', -1)">
+            <text class="sbtn-t">-</text>
+          </div>
+          <text class="sval">{{microMaxSec}}秒</text>
+          <div class="sbtn" @click="step('microMaxSec', 1)">
+            <text class="sbtn-t">+</text>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <text class="label">大休息</text>
+        <div class="body">
+          <div class="sbtn" @click="step('restMin', -5)">
+            <text class="sbtn-t">-</text>
+          </div>
+          <text class="sval">{{restMin}}分</text>
+          <div class="sbtn" @click="step('restMin', 5)">
+            <text class="sbtn-t">+</text>
+          </div>
+        </div>
+      </div>
+
+      <div class="row row-inline" @click="toggleAlgorithm">
+        <text class="label">提醒算法</text>
+        <div class="ctl">
+          <text class="bval">{{algorithmText}}</text>
+          <text class="arrow">&gt;</text>
+        </div>
+      </div>
+
+      <div class="row row-inline" @click="toggleBuzz">
+        <text class="label">震动强度</text>
+        <div class="ctl">
+          <text class="bval">{{buzzText}}</text>
+          <text class="arrow">&gt;</text>
+        </div>
+      </div>
+
+      <div class="row row-inline">
+        <text class="label">自动休息</text>
+        <div class="ctl">
+          <switch checked="{{autoRest}}" @change="onAutoRest"></switch>
+        </div>
+      </div>
+
+      <div class="row row-inline">
+        <text class="label">屏幕常亮</text>
+        <div class="ctl">
+          <switch checked="{{keepScreenOn}}" @change="onKeepOn"></switch>
+        </div>
+      </div>
+
+      <div class="hint">
+        <text class="hint-t">该休息 1 组，继续 2 组，专注结束 3 组。</text>
+        <text class="hint-t">常亮建议开着，息屏会被系统挂起。</text>
+      </div>
+
+    </scroll>
+  </div>
+</template>
+
+<style>
+.page {
+  width: 432px;
+  height: 514px;
+  flex-direction: column;
+  background-color: #000000;
+}
+
+/* 顶栏 72：标题栏不需要卡片那么厚，省下的 16 全给列表 */
+.topbar {
+  width: 432px;
+  height: 72px;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding-left: 24px;
+  padding-right: 24px;
+}
+.title {
+  font-size: 30px;
+  color: #ffffff;
+  font-weight: bold;
+}
+.btn-back {
+  height: 64px;
+  justify-content: center;
+  align-items: center;
+}
+.btn-back-t {
+  font-size: 26px;
+  color: #0d84ff;
+}
+/* 与「返回」两字等宽（26px × 2），只用来占位 */
+.bar-spacer {
+  width: 52px;
+  height: 64px;
+}
+
+/* 定高 = 514 - 72，竖向滚动必须给确定高度。
+   更要紧的是 flex-direction: column —— scroll 默认是横向布局，
+   子节点会横向排成一行，纵向没有任何溢出，于是"完全没有可滚动的距离"。
+   官方示例里每个 scroll 都显式写了 column，就是为这个。 */
+.list {
+  width: 432px;
+  height: 442px;
+  flex-direction: column;
+  padding-top: 8px;
+  padding-bottom: 36px;
+}
+
+/* ---- 行卡片 ----
+   横向：左右各留 24 的页边距 → 宽 384。之前 408 几乎贴边，这是"太宽"的来源。
+   纵向：126 = 10(pad) + 28(label) + 6(gap) + 72(控件) + 10(pad)。
+   标签独占一行、控件独占一行，两者不再抢宽度 —— 一行式怎么调都是"太窄"。
+   行间 12：等于半个圆角，看起来是同一组里的兄弟，而不是几根独立的棍子。
+   3 行 402 + 第 4 行露 32：底部露出下一张卡的一条边，用户才知道还能往下滑。 */
+.row {
+  width: 384px;
+  height: 126px;
+  margin-left: 24px;
+  margin-bottom: 12px;
+  border-radius: 22px;
+  background-color: #17171a;
+  /* 同上：不参与收缩，行高永远是 126 */
+  flex-shrink: 0;
+  flex-direction: column;
+  /* Vela 的 align-items 默认是 flex-start，纵向容器里的子节点不会自动撑满，
+     必须显式写 stretch，否则控件行只有内容宽，卡片右边会空一大块 */
+  align-items: stretch;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  padding-left: 24px;
+  padding-right: 24px;
+}
+.label {
+  height: 28px;
+  font-size: 23px;
+  color: #9a9aa0;
+}
+.body {
+  height: 72px;
+  margin-top: 6px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+/* 只有一处控件的行（开关 / 取值）：一行就够，堆成两行反而让控件孤零零落在右下角 */
+.row-inline {
+  flex-shrink: 0;
+  height: 88px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+.ctl {
+  flex-direction: row;
+  align-items: center;
+}
+
+/* 圆钮 76：手指落点比 64 稳很多；左右各贴卡片内边，中间留给数值 */
+.sbtn {
+  width: 72px;
+  height: 72px;
+  border-radius: 36px;
+  background-color: #2c2c2e;
+  justify-content: center;
+  align-items: center;
+}
+.sbtn-t {
+  font-size: 46px;
+  color: #ffffff;
+}
+.sval {
+  flex: 1;
+  font-size: 34px;
+  color: #ffffff;
+  text-align: center;
+}
+.bval {
+  font-size: 32px;
+  color: #0d84ff;
+}
+.arrow {
+  font-size: 30px;
+  color: #5a5a5e;
+  margin-left: 14px;
+}
+
+.hint {
+  flex-shrink: 0;
+  width: 384px;
+  margin-left: 24px;
+  flex-direction: column;
+  align-items: stretch;
+  padding-left: 24px;
+  padding-right: 24px;
+  padding-top: 18px;
+}
+.hint-t {
+  font-size: 20px;
+  color: #6e6e73;
+  margin-bottom: 12px;
+}
+</style>
+
+<script>
+import router from '@system.router'
+import DEFAULTS, { loadConfig, saveConfig, normalize } from '../../common/config'
+import { buzz, cancelBuzz } from '../../common/buzz'
+
+const RANGE = {
+  focusMin: [5, 180],
+  gapMin: [1, 60],
+  gapMaxMin: [1, 60],
+  microMinSec: [3, 120],
+  microMaxSec: [3, 120],
+  restMin: [0, 60]
+}
+
+const ALGO_TEXT = { focus: '新专注', 'true': '真随机' }
+const BUZZ_TEXT = { 1: '轻', 2: '标准', 3: '重' }
+
+export default {
+  /**
+   * 注意：这里刻意把每个值摊平成独立字段，而不是让模板绑 {{cfg.xxx}}。
+   *
+   * 原因：原来改一项就 `this.cfg = 新对象`，整对象替换会让所有依赖 cfg 的节点
+   * 一起重绘——点一下最下面的按钮，上面的行会全部闪一遍，滚动位置也可能跳。
+   * 摊平后改一个字段只重绘那一行，其它行不动。
+   */
+  private: {
+    focusMin: 90,
+    gapMin: 3,
+    gapMaxMin: 5,
+    microMinSec: 5,
+    microMaxSec: 15,
+    restMin: 20,
+    algorithmText: '新专注',
+    buzzText: '重',
+    autoRest: true,
+    keepScreenOn: true
+  },
+
+  onInit() {
+    this.cfgRaw = DEFAULTS
+    loadConfig((c) => {
+      this.syncFields(c)
+    })
+  },
+
+  onDestroy() {
+    // 试震的序列可能还没播完
+    cancelBuzz()
+  },
+
+  /** 只把真正变化的字段写回视图，避免整页刷新 */
+  syncFields(c) {
+    if (this.focusMin !== c.focusMin) this.focusMin = c.focusMin
+    if (this.gapMin !== c.gapMin) this.gapMin = c.gapMin
+    if (this.gapMaxMin !== c.gapMaxMin) this.gapMaxMin = c.gapMaxMin
+    if (this.microMinSec !== c.microMinSec) this.microMinSec = c.microMinSec
+    if (this.microMaxSec !== c.microMaxSec) this.microMaxSec = c.microMaxSec
+    if (this.restMin !== c.restMin) this.restMin = c.restMin
+    if (this.autoRest !== c.autoRest) this.autoRest = c.autoRest
+    if (this.keepScreenOn !== c.keepScreenOn) this.keepScreenOn = c.keepScreenOn
+
+    const at = ALGO_TEXT[c.algorithm] || '新专注'
+    if (this.algorithmText !== at) this.algorithmText = at
+    const bt = BUZZ_TEXT[c.buzzLevel] || '标准'
+    if (this.buzzText !== bt) this.buzzText = bt
+  },
+
+  patch(field, value) {
+    const next = Object.assign({}, this.cfgRaw || DEFAULTS)
+    next[field] = value
+    const c = normalize(next)
+    this.cfgRaw = c
+    // normalize 可能连带修正别的字段（比如上限低于下限），所以要整体比对一次，
+    // 但只写回变化的那几个，没变的字段不会触发重绘。
+    this.syncFields(c)
+    saveConfig(c)
+  },
+
+  step(field, delta) {
+    const r = RANGE[field]
+    if (!r) return
+    const cur = Number(this.cfgRaw[field]) || 0
+    let v = cur + delta
+    if (v < r[0]) v = r[0]
+    if (v > r[1]) v = r[1]
+    if (v === cur) return
+    this.patch(field, v)
+  },
+
+  toggleAlgorithm() {
+    this.patch('algorithm', this.cfgRaw.algorithm === 'focus' ? 'true' : 'focus')
+  },
+
+  toggleBuzz() {
+    let lv = (this.cfgRaw.buzzLevel || 3) + 1
+    if (lv > 3) lv = 1
+    this.patch('buzzLevel', lv)
+    // 立刻按新强度播一遍，让用户当场确认手感
+    buzz('microStart', lv)
+  },
+
+  onAutoRest(e) {
+    this.patch('autoRest', e.checked)
+  },
+
+  onKeepOn(e) {
+    this.patch('keepScreenOn', e.checked)
+  },
+
+  onTest() {
+    // 播"该休息"那组，两声长震，方便和正式提示对比
+    buzz('microStart', this.cfgRaw.buzzLevel)
+  },
+
+  goBack() {
+    router.back()
+  }
+}
+</script>

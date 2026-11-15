@@ -1,0 +1,22 @@
+# 依赖
+node_modules/
+
+# 构建产物
+dist/
+build/
+.temp_*/
+*.rpk
+
+# 旧版本归档（本地回退用，不进仓库）
+_legacy/
+
+# 本地预览
+_preview/
+_preview.html
+
+# 系统/编辑器
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.log
