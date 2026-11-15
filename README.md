@@ -3,6 +3,12 @@
 把 [zeenzeen.com/random-reminder](https://zeenzeen.com/random-reminder/) 的「随机提示音」搬到手表上：
 90 分钟专注里，每隔 3~5 分钟随机震你一下，提醒抬头休息 5~15 秒。铃声换成震动。
 
+## 下载安装
+
+- 直接下载：**[random-cue-v1.1.2.rpk](https://github.com/hongguangjun99999999/xiaomi-watch-timer/releases/download/v1.1.2/random-cue-v1.1.2.rpk)**（31 KB，适配红米手表 6 蓝牙版）
+- 历史版本：<https://github.com/hongguangjun99999999/xiaomi-watch-timer/releases>
+- 装进手表的具体步骤：见 [安装到手表.md](安装到手表.md)
+
 ## 它与网页版的关系
 
 算法是从网页版 minified 源码里逐行解出来的，不是"照着描述重写"：
